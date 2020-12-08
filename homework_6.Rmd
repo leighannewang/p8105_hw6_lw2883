@@ -104,8 +104,8 @@ models_results_df %>%
 
 Reading in data and cleaning it:
 
-```{r}
-baby_df = 
+```{r, message = FALSE}
+bwt_df = 
   read_csv("./data/birthweight.csv") %>%
   mutate(
    babysex = as.factor(babysex),
@@ -115,5 +115,66 @@ baby_df =
   )
 ```
 
+The model below is looking at effect of mother's weight gain during pregnancy on baby's birthweight (in grams), other predictors in the model based on what likely contributes to baby's birthweight  will be: mother's height, gestational age in weeks, and pre-pregnancy weight.
+
+```{r}
+model_bwt = lm(bwt ~ wtgain + mheight + gaweeks + ppwt, data = bwt_df)
+```
+
+Next, we will plot model residuals against fitted values, based on this plot it looks like there are some outliers:
+
+```{r}
+bwt_df %>% 
+  add_residuals(model_bwt) %>% 
+  add_predictions(model_bwt) %>% 
+  ggplot(aes(x = pred, y = resid)) +
+  geom_point(alpha = 0.5)
+```
+
+We will now compare this model with two other models:
+
+```{r}
+model_bwt2 = lm(bwt ~ blength + gaweeks, data = bwt_df)
+
+model_bwt3 = lm(bwt ~ bhead * blength * babysex, data = bwt_df)
+```
+
+We will use cross-validation to compare our first model with the other 2 models:
+
+```{r}
+cv_df =
+  crossv_mc(bwt_df, 100) %>% 
+  mutate(
+    train = map(train, as_tibble),
+    test = map(test, as_tibble))
+```
+
+Below, we are obtaining RMSEs:
+
+```{r}
+cv_df = 
+  cv_df %>% 
+  mutate(
+    model_bwt  = map(train, ~lm(bwt ~ wtgain + mheight + gaweeks + ppwt, data = .x)),
+    model_bwt2  = map(train, ~lm(bwt ~ blength + gaweeks, data = .x)),
+    model_bwt3  = map(train, ~lm(bwt ~ bhead * blength * babysex, data = .x))) %>% 
+  mutate(
+    rmse_bwt = map2_dbl(model_bwt, test, ~rmse(model = .x, data = .y)),
+    rmse_bwt2 = map2_dbl(model_bwt2, test, ~rmse(model = .x, data = .y)),
+    rmse_bwt3 = map2_dbl(model_bwt3, test, ~rmse(model = .x, data = .y)))
+```
+
+This plot shows the RMSEs across each model, the highest by far is model 1; model 2 and model 3 are lower. However, model 3 has the lowest RMSEs suggesting that it is the best model:
+```{r}
+cv_df %>% 
+  select(starts_with("rmse")) %>% 
+  pivot_longer(
+    everything(),
+    names_to = "model", 
+    values_to = "rmse",
+    names_prefix = "rmse_") %>% 
+  mutate(model = fct_inorder(model)) %>% 
+  ggplot(aes(x = model, y = rmse)) + geom_violin()
+```
 
 
