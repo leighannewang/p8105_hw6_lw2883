@@ -78,7 +78,29 @@ models_results_df %>%
   ggplot(aes(x = city_state, y = OR)) + 
   geom_point() + 
   geom_errorbar(aes(ymin = CI_lower, ymax = CI_upper)) + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 <img src="homework_6_files/figure-gfm/unnamed-chunk-4-1.png" width="90%" />
+
+## Problem 2
+
+Reading in data and cleaning it:
+
+``` r
+baby_df = 
+  read_csv("./data/birthweight.csv") %>%
+  mutate(
+   babysex = as.factor(babysex),
+   frace = as.factor(frace),
+   malform = as.factor(malform),
+   mrace = as.factor(mrace)
+  )
+```
+
+    ## 
+    ## -- Column specification --------------------------------------------------------
+    ## cols(
+    ##   .default = col_double()
+    ## )
+    ## i Use `spec()` for the full column specifications.
