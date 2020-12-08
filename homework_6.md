@@ -3,7 +3,7 @@ Homework 6
 
 ## Problem 1
 
-Reading in the data and cleaning:
+**Reading in the data and cleaning:**
 
 ``` r
 homicide_df = 
@@ -22,7 +22,7 @@ homicide_df =
   select(city_state, resolution, victim_age, victim_race, victim_sex)
 ```
 
-Start with Baltimore, MD:
+**Start with Baltimore, MD:**
 
 ``` r
 baltimore_df =
@@ -48,7 +48,7 @@ glm(resolution ~ victim_age + victim_race + victim_sex,
 | victim\_raceWhite | 2.320 |     1.648 |     3.268 |
 | victim\_sexMale   | 0.426 |     0.325 |     0.558 |
 
-Apply to all cities:
+**Apply to all cities:**
 
 ``` r
 models_results_df = 
@@ -69,7 +69,7 @@ models_results_df =
   select(city_state, term, OR, starts_with("CI")) 
 ```
 
-Plot of ORs and CIs for each city:
+**Plot of ORs and CIs for each city:**
 
 ``` r
 models_results_df %>% 
@@ -85,7 +85,7 @@ models_results_df %>%
 
 ## Problem 2
 
-Reading in data and cleaning it:
+**Reading in data and cleaning it:**
 
 ``` r
 bwt_df = 
@@ -98,17 +98,18 @@ bwt_df =
   )
 ```
 
-The model below is looking at effect of mother’s weight gain during
-pregnancy on baby’s birthweight (in grams), other predictors in the
-model based on what likely contributes to baby’s birthweight will be:
-mother’s height, gestational age in weeks, and pre-pregnancy weight.
+**Modeling baby’s birthweight**
 
 ``` r
 model_bwt = lm(bwt ~ wtgain + mheight + gaweeks + ppwt, data = bwt_df)
 ```
 
-Next, we will plot model residuals against fitted values, based on this
-plot it looks like there are some outliers:
+The model above is looking at effect of mother’s weight gain during
+pregnancy on baby’s birthweight (in grams), other predictors in the
+model based on what likely contributes to baby’s birthweight will be:
+mother’s height, gestational age in weeks, and pre-pregnancy weight.
+
+**Plot residuals and fitted values**
 
 ``` r
 bwt_df %>% 
@@ -120,18 +121,16 @@ bwt_df %>%
 
 <img src="homework_6_files/figure-gfm/unnamed-chunk-7-1.png" width="90%" />
 
-We will now compare this model with two other models:
+The plot above shows the residuals against fitted values, based on this
+plot it looks like there are some outliers:
+
+**Comparing model 1 with other 2 models through cross validation**
 
 ``` r
 model_bwt2 = lm(bwt ~ blength + gaweeks, data = bwt_df)
 
 model_bwt3 = lm(bwt ~ bhead * blength * babysex, data = bwt_df)
-```
 
-We will use cross-validation to compare our first model with the other 2
-models:
-
-``` r
 cv_df =
   crossv_mc(bwt_df, 100) %>% 
   mutate(
@@ -139,7 +138,7 @@ cv_df =
     test = map(test, as_tibble))
 ```
 
-Below, we are obtaining RMSEs:
+**Obtaining RMSEs**
 
 ``` r
 cv_df = 
@@ -154,9 +153,7 @@ cv_df =
     rmse_bwt3 = map2_dbl(model_bwt3, test, ~rmse(model = .x, data = .y)))
 ```
 
-This plot shows the RMSEs across each model, the highest by far is model
-1; model 2 and model 3 are lower. However, model 3 has the lowest RMSEs
-suggesting that it is the best model:
+**Plotting RMSEs**
 
 ``` r
 cv_df %>% 
@@ -170,11 +167,15 @@ cv_df %>%
   ggplot(aes(x = model, y = rmse)) + geom_violin()
 ```
 
-<img src="homework_6_files/figure-gfm/unnamed-chunk-11-1.png" width="90%" />
+<img src="homework_6_files/figure-gfm/unnamed-chunk-10-1.png" width="90%" />
+
+This plot shows the RMSEs across each model, the highest by far is model
+1 while model 2 and model 3 are lower. However, model 3 has the lowest
+RMSEs suggesting that it is the best model.
 
 ## Problem 3
 
-Read in data:
+**Read in data:**
 
 ``` r
 weather_df = 
@@ -190,7 +191,7 @@ weather_df =
   select(name, id, everything())
 ```
 
-Produce estimates of r squared and log(beta0 \* beta1):
+**Produce estimates of r squared and log(beta0 \* beta1):**
 
 ``` r
 bootstrap_df =
@@ -216,7 +217,7 @@ weather_df %>%
   )
 ```
 
-Plot the distribution of these estimates:
+**Plot the distribution of these estimates:**
 
 ``` r
 bootstrap_df %>% 
@@ -224,7 +225,7 @@ bootstrap_df %>%
   geom_density()
 ```
 
-<img src="homework_6_files/figure-gfm/unnamed-chunk-14-1.png" width="90%" />
+<img src="homework_6_files/figure-gfm/unnamed-chunk-13-1.png" width="90%" />
 
 ``` r
 bootstrap_df %>% 
@@ -232,4 +233,32 @@ bootstrap_df %>%
   geom_density()
 ```
 
-<img src="homework_6_files/figure-gfm/unnamed-chunk-14-2.png" width="90%" />
+<img src="homework_6_files/figure-gfm/unnamed-chunk-13-2.png" width="90%" />
+
+The first plot shows the distribution of the r-squared values from the
+data, it peaks at around 0.91, however there is a little bump at around
+0.90. The second plot shows the distribution of log(b0\*b1) values and
+peaks around 2.1. Both curves appear to be normally distributed.
+
+**95% CI for r-squared and log(b0 \* b1):**
+
+``` r
+bootstrap_df %>% 
+  pivot_longer(
+    r.squared:logb,
+    values_to = "estimate",
+    names_to = "term"
+  ) %>%
+  group_by(term) %>% 
+  summarize(
+    ci_lower = quantile(estimate, 0.025),
+    ci_upper = quantile(estimate, 0.975)
+  )
+## # A tibble: 4 x 3
+##   term      ci_lower ci_upper
+##   <chr>        <dbl>    <dbl>
+## 1 intercept    6.72     7.72 
+## 2 logb         1.97     2.06 
+## 3 r.squared    0.894    0.927
+## 4 tmin         1.01     1.07
+```
