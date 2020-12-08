@@ -253,12 +253,13 @@ bootstrap_df %>%
   summarize(
     ci_lower = quantile(estimate, 0.025),
     ci_upper = quantile(estimate, 0.975)
-  )
-## # A tibble: 4 x 3
-##   term      ci_lower ci_upper
-##   <chr>        <dbl>    <dbl>
-## 1 intercept    6.72     7.72 
-## 2 logb         1.97     2.06 
-## 3 r.squared    0.894    0.927
-## 4 tmin         1.01     1.07
+  ) %>% 
+  knitr::kable(digits = 3)
 ```
+
+| term      | ci\_lower | ci\_upper |
+| :-------- | --------: | --------: |
+| intercept |     6.724 |     7.722 |
+| logb      |     1.967 |     2.059 |
+| r.squared |     0.894 |     0.927 |
+| tmin      |     1.006 |     1.071 |

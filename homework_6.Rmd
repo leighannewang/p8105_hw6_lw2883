@@ -251,7 +251,8 @@ bootstrap_df %>%
   summarize(
     ci_lower = quantile(estimate, 0.025),
     ci_upper = quantile(estimate, 0.975)
-  )
+  ) %>% 
+  knitr::kable(digits = 3)
 ```
 
 
