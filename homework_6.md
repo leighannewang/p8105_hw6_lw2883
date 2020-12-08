@@ -171,3 +171,65 @@ cv_df %>%
 ```
 
 <img src="homework_6_files/figure-gfm/unnamed-chunk-11-1.png" width="90%" />
+
+## Problem 3
+
+Read in data:
+
+``` r
+weather_df = 
+  rnoaa::meteo_pull_monitors(
+    c("USW00094728"),
+    var = c("PRCP", "TMIN", "TMAX"), 
+    date_min = "2017-01-01",
+    date_max = "2017-12-31") %>%
+  mutate(
+    name = recode(id, USW00094728 = "CentralPark_NY"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) %>%
+  select(name, id, everything())
+```
+
+Produce estimates of r squared and log(beta0 \* beta1):
+
+``` r
+bootstrap_df =
+weather_df %>% 
+  bootstrap(5000, id = "strap_number") %>% 
+  mutate(
+    models = map(.x = strap, ~ lm(tmax ~ tmin, data = .x)),
+    results = map(models, broom::glance),
+    results2 = map(models, broom::tidy)
+  ) %>% 
+  select(strap_number, results, results2) %>% 
+  unnest(results) %>% 
+  select(strap_number, r.squared, results2) %>% 
+  unnest(results2) %>% 
+  select(strap_number, r.squared, term, estimate) %>% 
+  pivot_wider(
+    names_from = term,
+    values_from = estimate
+  ) %>% 
+  rename(intercept = '(Intercept)') %>% 
+  mutate(
+    logb = log(intercept * tmin)
+  )
+```
+
+Plot the distribution of these estimates:
+
+``` r
+bootstrap_df %>% 
+  ggplot(aes(x = r.squared)) +
+  geom_density()
+```
+
+<img src="homework_6_files/figure-gfm/unnamed-chunk-14-1.png" width="90%" />
+
+``` r
+bootstrap_df %>% 
+  ggplot(aes(x = logb)) +
+  geom_density()
+```
+
+<img src="homework_6_files/figure-gfm/unnamed-chunk-14-2.png" width="90%" />
